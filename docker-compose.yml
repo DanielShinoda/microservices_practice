@@ -1,0 +1,49 @@
+version: "3.6"
+
+services:
+    db:
+        image: postgres:latest
+        environment:
+            POSTGRES_DB: your_database_name
+            POSTGRES_USER: your_username
+            POSTGRES_PASSWORD: your_password
+            POSTGRES_HOST_AUTH_METHOD: trust
+        ports:
+            - "5434:5432"
+        healthcheck:
+            test: ["CMD-SHELL", "pg_isready -U your_username -d your_database_name"]
+            interval: 5s
+            timeout: 5s
+            retries: 10
+
+    animals:
+        container_name: animals
+        image: animals
+        ports:
+            - "8000:8000"
+        environment:
+            DATABASE_URL: postgresql+psycopg2://your_username:your_password@db:5432/your_database_name
+        healthcheck:
+            test: [ "CMD", "curl", "-f", "http://localhost:8000/health" ]
+            interval: 30s
+            timeout: 10s
+            retries: 3
+        depends_on:
+            db:
+                condition: service_healthy
+
+    feed:
+        container_name: feed
+        image: feed
+        ports:
+            - "8001:8001"
+        environment:
+            DATABASE_URL: postgresql+psycopg2://your_username:your_password@db:5432/your_database_name
+        healthcheck:
+            test: [ "CMD", "curl", "-f", "http://localhost:8001/health" ]
+            interval: 30s
+            timeout: 10s
+            retries: 3
+        depends_on:
+            db:
+                condition: service_healthy

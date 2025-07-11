@@ -1,21 +1,23 @@
 from fastapi import FastAPI
-from database.db import init
+from database.db import wait_for_db
 
-from fastapi import FastAPI
 from models.feed import Feed
 from database.db import SessionDep
 from sqlmodel import select
 
 app = FastAPI()
 
+
 @app.on_event("startup")
 def on_startup():
-    init()
+    wait_for_db()
+
 
 @app.get("/feeding/feed/{type}")
 async def get_feed(type: str, session: SessionDep):
     feeds = session.exec(select(Feed).where(Feed.type == type)).all()
     return feeds
+
 
 @app.post("/feeding/feed/{type}")
 async def add_feed(id: int, type: str, amount: int, session: SessionDep):
